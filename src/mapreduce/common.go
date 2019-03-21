@@ -3,6 +3,13 @@ package mapreduce
 import (
 	"fmt"
 	"strconv"
+	"io"
+	"log"
+)
+
+var (
+	infoLog  *log.Logger
+	errorLog  *log.Logger
 )
 
 // Debugging enabled?
@@ -40,4 +47,16 @@ func reduceName(jobName string, mapTask int, reduceTask int) string {
 // mergeName constructs the name of the output file of reduce task <reduceTask>
 func mergeName(jobName string, reduceTask int) string {
 	return "mrtmp." + jobName + "-res-" + strconv.Itoa(reduceTask)
+}
+
+func initLogger(infoHandle io.Writer, errorHandle io.Writer) (*log.Logger, *log.Logger){
+	infoLog = log.New(infoHandle,
+		"INFO: ",
+		log.Ldate|log.Ltime|log.Lshortfile)
+
+	errorLog = log.New(errorHandle,
+		"ERROR: ",
+		log.Ldate|log.Ltime|log.Lshortfile)
+
+	return infoLog, errorLog
 }
