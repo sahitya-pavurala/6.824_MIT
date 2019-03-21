@@ -8,6 +8,11 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"os"
+)
+
+var (
+	INFO, ERROR = initLogger(os.Stdout, os.Stderr)
 )
 
 // Master holds all the state that the master needs to keep track of.
