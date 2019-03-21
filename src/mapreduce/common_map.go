@@ -2,6 +2,9 @@ package mapreduce
 
 import (
 	"hash/fnv"
+	"io/ioutil"
+	"os"
+	"encoding/json"
 )
 
 func doMap(
@@ -11,6 +14,8 @@ func doMap(
 	nReduce int, // the number of reduce task that will be run ("R" in the paper)
 	mapF func(filename string, contents string) []KeyValue,
 ) {
+
+
 	//
 	// doMap manages one map task: it should read one of the input files
 	// (inFile), call the user-defined map function (mapF) for that file's
@@ -53,8 +58,47 @@ func doMap(
 	//
 	// Your code here (Part I).
 	//
+
+	INFO.Printf("Starting maptask %d", mapTask)
+
+	data, err := ioutil.ReadFile(inFile)
+	checkError(err)
+
+	mapOutput := mapF(inFile, string(data))
+	INFO.Printf("Number of records in mapOutput %d \n", len(mapOutput))
+	intermediateOutputsPerReducer := make(map[int][]KeyValue)
+
+	for _,kv := range mapOutput {
+
+		reduceId := ihash(kv.Key) % nReduce
+		intermediateOutputsPerReducer[reduceId] = append(intermediateOutputsPerReducer[reduceId], kv)
+	}
+
+	for reducerId,records := range intermediateOutputsPerReducer {
+		fName := reduceName(jobName, mapTask, reducerId)
+		wd, _ := os.Getwd()
+		intermediateFile, err := os.Create(fName)
+		checkError(err)
+
+		jsonEncoder := json.NewEncoder(intermediateFile)
+		for _, kv := range records {
+			checkError(jsonEncoder.Encode(kv))
+		}
+
+		INFO.Printf("Intermediate file %s written to path %s \n", fName, wd)
+		defer intermediateFile.Close()
+	}
+
+
 }
 
+
+func checkError(e error) {
+	if e != nil {
+		ERROR.Println(e.Error())
+		return
+	}
+}
 func ihash(s string) int {
 	h := fnv.New32a()
 	h.Write([]byte(s))
