@@ -60,3 +60,15 @@ func initLogger(infoHandle io.Writer, errorHandle io.Writer) (*log.Logger, *log.
 
 	return infoLog, errorLog
 }
+
+func checkError(e error) {
+	if e != nil {
+		ERROR.Println(e.Error())
+		return
+	}
+}
+
+type sortByKey []KeyValue
+func (kvRecords sortByKey) Less(i ,j int) bool{
+	return kvRecords[i].Key < kvRecords[j].Key
+}
