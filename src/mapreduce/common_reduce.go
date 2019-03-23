@@ -104,10 +104,10 @@ func doReduce(
 
 		if currentKey != reduceId{
 			if valuesPerKey != nil{
-				INFO.Printf("Number of values for key %s is %d", currentKey, len(valuesPerKey))
+				//INFO.Printf("Number of values for key %s is %d", currentKey, len(valuesPerKey))
 				checkError(jsonEncoder.Encode(KeyValue{currentKey, reduceF(currentKey, valuesPerKey)}))
 			}
-			valuesPerKey = make([]string, 1)
+			valuesPerKey = make([]string, 0)
 			currentKey = reduceId
 		}
 
@@ -116,7 +116,7 @@ func doReduce(
 	}
 
 	if valuesPerKey != nil{
-		INFO.Printf("Number of values for key %s is %d", currentKey, len(valuesPerKey))
+		//INFO.Printf("Number of values for key %s is %d", currentKey, len(valuesPerKey))
 		checkError(jsonEncoder.Encode(KeyValue{currentKey, reduceF(currentKey, valuesPerKey)}))
 	}
 
