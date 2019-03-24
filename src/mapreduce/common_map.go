@@ -89,16 +89,8 @@ func doMap(
 		defer intermediateFile.Close()
 	}
 
-
 }
 
-
-func checkError(e error) {
-	if e != nil {
-		ERROR.Println(e.Error())
-		return
-	}
-}
 func ihash(s string) int {
 	h := fnv.New32a()
 	h.Write([]byte(s))

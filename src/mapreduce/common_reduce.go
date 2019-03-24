@@ -1,5 +1,13 @@
 package mapreduce
 
+import (
+	"os"
+	"encoding/json"
+	"io"
+	"sort"
+	"strings"
+)
+
 func doReduce(
 	jobName string, // the name of the whole MapReduce job
 	reduceTask int, // which reduce task this is
@@ -44,4 +52,72 @@ func doReduce(
 	//
 	// Your code here (Part I).
 	//
+
+
+	//intermediateFileName := reduceName(jobName, m)
+
+	INFO.Printf("Starting reduce task %d", reduceTask)
+
+	recordsForReduceTask := make([]KeyValue, 0)
+	for mapTaskNum := 0; mapTaskNum < nMap; mapTaskNum++{
+		fName := reduceName(jobName, mapTaskNum, reduceTask)
+		reduceFile, err := os.Open(fName)
+		checkError(err)
+		defer reduceFile.Close()
+
+		jsonDecoder := json.NewDecoder(reduceFile)
+
+		for {
+				var kv KeyValue
+				if err := jsonDecoder.Decode(&kv); err == io.EOF {
+					break
+					}
+				checkError(err)
+				recordsForReduceTask = append(recordsForReduceTask, kv)
+				}
+
+			}
+	INFO.Println("Implementing sort on the records")
+	//Sort and combine can be replaced with a map
+	sort.Slice(recordsForReduceTask, func(i, j int) bool {
+		switch strings.Compare(recordsForReduceTask[i].Key, recordsForReduceTask[j].Key) {
+		case -1:
+			return true
+		}
+		return false
+	})
+
+	INFO.Printf("Number of records for reduce task %d is %d", reduceTask, len(recordsForReduceTask))
+
+	var currentKey string
+	var valuesPerKey []string
+	//valuesForEachKey := make(map[string][]string)
+	outputFile, err := os.Create(outFile)
+	checkError(err)
+	defer outputFile.Close()
+
+	jsonEncoder := json.NewEncoder(outputFile)
+
+	for _,record := range recordsForReduceTask{
+		reduceId := record.Key
+		val := record.Value
+
+		if currentKey != reduceId{
+			if valuesPerKey != nil{
+				//INFO.Printf("Number of values for key %s is %d", currentKey, len(valuesPerKey))
+				checkError(jsonEncoder.Encode(KeyValue{currentKey, reduceF(currentKey, valuesPerKey)}))
+			}
+			valuesPerKey = make([]string, 0)
+			currentKey = reduceId
+		}
+
+		valuesPerKey = append(valuesPerKey, val)
+
+	}
+
+	if valuesPerKey != nil{
+		//INFO.Printf("Number of values for key %s is %d", currentKey, len(valuesPerKey))
+		checkError(jsonEncoder.Encode(KeyValue{currentKey, reduceF(currentKey, valuesPerKey)}))
+	}
+
 }
